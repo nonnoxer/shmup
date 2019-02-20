@@ -19,7 +19,7 @@ done = False
 
 clock = pygame.time.Clock()
 
-player = classes.Player(480, 670, 50, 1)
+player = classes.Player(460, 700, 20, 2)
 
 while not done:
     for event in pygame.event.get():
