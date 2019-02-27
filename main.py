@@ -57,8 +57,9 @@ class Player(Target):
     """Subclass of target to be controlled by player"""
 
 #PARENT CLASS INIT--------------------------------------------------------------
-    def __init__(self, x, y, size, spd, img):
+    def __init__(self, x, y, size, spd, img, hp):
         Target.__init__(self, x, y, size, spd, img)
+        self.hp = hp
 
 #PARENT CLASS DRAW--------------------------------------------------------------
     def draw(self):
@@ -192,9 +193,12 @@ fprojectiles_group = pygame.sprite.Group()
 enemies = []
 enemies_group = pygame.sprite.Group()
 allies = []
-player = Player(230, 300, 20, 5, "assets/Ship.png")
+player = Player(230, 300, 20, 5, "assets/Ship.png", 3)
+player_group = pygame.sprite.Group()
+player_group.add(player)
 a = 0
 b = 200
+score = 0
 
 
 #MAIN LOOP======================================================================
@@ -205,52 +209,65 @@ while not done:
 
     screen.fill(BLACK)
 
+    if player.hp > 0:
+        """Game loop if still alive"""
+
 #DRAWING, UPDATING AND DELETING OBJECTS-----------------------------------------
-    for i in eprojectiles:
-        screen.blit(i.draw(), (i.rect.x, i.rect.y))
-        i.update()
-        if i.rect.y > 360:
-            eprojectiles.remove(i)
-            eprojectiles_group.remove(i)
-    for i in fprojectiles:
-        screen.blit(i.draw(), (i.rect.x, i.rect.y))
-        i.update()
-        if i.rect.y < 0:
-            fprojectiles.remove(i)
-            fprojectiles_group.remove(i)
-    screen.blit(player.draw(), (player.rect.x, player.rect.y))
-    player.update()
-    for i in allies:
-        screen.blit(i.draw(), (i.rect.x, i.rect.y))
-        i.update()
-    for i in enemies:
-        screen.blit(i.draw(), (i.rect.x, i.rect.y))
-        i.update()
-        if i.rect.y > 360:
-            enemies.remove(i)
-            enemies_group.remove(i)
+        for i in eprojectiles:
+            screen.blit(i.draw(), (i.rect.x, i.rect.y))
+            i.update()
+            if i.rect.y > 360:
+                eprojectiles.remove(i)
+                eprojectiles_group.remove(i)
+        for i in fprojectiles:
+            screen.blit(i.draw(), (i.rect.x, i.rect.y))
+            i.update()
+            if i.rect.y < 0:
+                fprojectiles.remove(i)
+                fprojectiles_group.remove(i)
+        screen.blit(player.draw(), (player.rect.x, player.rect.y))
+        player.update()
+        for i in allies:
+            screen.blit(i.draw(), (i.rect.x, i.rect.y))
+            i.update()
+        for i in enemies:
+            screen.blit(i.draw(), (i.rect.x, i.rect.y))
+            i.update()
+            if i.rect.y > 360:
+                enemies.remove(i)
+                enemies_group.remove(i)
+                score = score - 10
 
 #SPAWNING ENEMIES---------------------------------------------------------------
-    if a % int(b) == 0:
-        enemies.append(Enemy(random.randint(0, 460), -20, 20, 1, "assets/Enemy.png"))
-        enemies_group.add(enemies[len(enemies) - 1])
-        a = 0
+        if a % int(b) == 0:
+            enemies.append(Enemy(random.randint(0, 460), -20, 20, 1, "assets/Enemy.png"))
+            enemies_group.add(enemies[len(enemies) - 1])
+            a = 0
 
 #COLLISION DETECTION------------------------------------------------------------
-    ef_collide = pygame.sprite.groupcollide(enemies_group, fprojectiles_group, True, True)
-    ef_collide_enemies = ef_collide.keys()
-    ef_collide_fprojectiles = ef_collide.values()
-    for i in ef_collide_enemies:
-        enemies.remove(i)
-    for i in ef_collide_fprojectiles:
-        fprojectiles.remove(i[0])
+        ef_collide = pygame.sprite.groupcollide(enemies_group, fprojectiles_group, True, True)
+        ef_collide_enemies = ef_collide.keys()
+        ef_collide_fprojectiles = ef_collide.values()
+        for i in ef_collide_enemies:
+            enemies.remove(i)
+            score = score + 1
+        for i in ef_collide_fprojectiles:
+            fprojectiles.remove(i[0])
+        pe_collide = pygame.sprite.groupcollide(player_group, eprojectiles_group, False, True)
+        pe_collide_eprojectiles = pe_collide.values()
+        for i in pe_collide_eprojectiles:
+            player.hp = player.hp - 1
+            eprojectiles.remove(i[0])
 
-#LOOP VARIABLES UPDATE----------------------------------------------------------
-    a = a + 1
-    if b > 48:
-        b = b - 0.01
+#VARIABLES UPDATE---------------------------------------------------------------
+        a = a + 1
+        if b > 48:
+            b = b - 0.01
+
+#LOOP UPDATE--------------------------------------------------------------------
     pygame.display.flip()
     clock.tick(60)
+    print(player.hp, score)
 
 
 #EXIT GAME LOOP=================================================================
