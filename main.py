@@ -3,6 +3,8 @@ import pygame
 import pygame.font
 pygame.init()
 pygame.font.init()
+font = pygame.font.SysFont('Consolas', 16)
+bigfont = pygame.font.SysFont('Consolas', 32)
 import random
 
 
@@ -263,11 +265,18 @@ while not done:
         a = a + 1
         if b > 48:
             b = b - 0.01
+        screen.blit(font.render('Lives: ' + str(player.hp), False, WHITE), (0, 0))
+        screen.blit(font.render('Score: ' + str(score), False, WHITE), (0, 16))
+
+#GAME OVER----------------------------------------------------------------------
+    else:
+        screen.blit(bigfont.render('Game Over', False, WHITE), (176, 148))
+        if score <= 0:
+            screen.blit(font.render('hAhA yOu SuCk', False, WHITE), (176, 180))
 
 #LOOP UPDATE--------------------------------------------------------------------
     pygame.display.flip()
     clock.tick(60)
-    print(player.hp, score)
 
 
 #EXIT GAME LOOP=================================================================
