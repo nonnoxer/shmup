@@ -2,6 +2,9 @@
 import pygame
 import pygame.font
 pygame.init()
+pygame.mixer.init()
+music = pygame.mixer.music.load("assets/space magic.ogg")
+pygame.mixer.music.play(-1)
 pygame.font.init()
 font = pygame.font.SysFont('Consolas', 16)
 bigfont = pygame.font.SysFont('Consolas', 32)
@@ -98,13 +101,21 @@ class Enemy(Target):
     def update(self):
         Target.update(self)
         self.rect.y = self.rect.y + self.spd
-        if self.a % 200 == 0:
+        if self.a % 128 == 0:
             eprojectiles.append(Missile(self.rect.centerx, self.rect.centery, 5, 2, "assets/Missile.png"))
             eprojectiles_group.add(eprojectiles[len(eprojectiles) - 1])
-            self.a = 0
-        elif self.a % 50 == 0:
+            if self.a % 48 == 0:
+                self.a = 0
+        if self.a % 48 == 0:
             eprojectiles.append(Laser(self.rect.centerx, self.rect.centery, 5, 4, "assets/Laser.png"))
             eprojectiles_group.add(eprojectiles[len(eprojectiles) - 1])
+
+#DIE----------------------------------------------------------------------------
+    #def die(self):
+    #    self.probability = random.randint(0, 99)
+    #    if self.probability >= 0:
+    #        powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 'assets/Bubble Heart.png'))
+    #        powerups_group.add(powerups[len(powerups) - 1])
 
 
 #ALLY SUBCLASS==================================================================
@@ -184,7 +195,33 @@ class Missile(Projectile):
             self.rect.centerx = self.rect.centerx + self.spd
 
 
-#class Misc(object):
+
+#POWERUP AND SUBCLASSES#########################################################
+
+
+#POWERUP PARENT CLASS===========================================================
+class Powerup(pygame.sprite.Sprite):
+    """Parent class for all powerups"""
+
+#POWERUP INIT-------------------------------------------------------------------
+    def __init__(self, x, y, size, img):
+        pygame.sprite.Sprite.__init__(self)
+        self.size = size
+        self.img = pygame.image.load(img)
+        self.rect = self.img.get_rect()
+        self.rect.centerx = x
+        self.rect.centery = y
+
+#POWERUP DRAW-------------------------------------------------------------------
+    def draw(self):
+        self.surface = pygame.Surface((self.size, self.size), pygame.SRCALPHA, 32)
+        self.surface = self.surface.convert_alpha()
+        self.surface.blit(self.img, (0, 0))
+        return self.surface
+
+#POWERUP UPDATE-----------------------------------------------------------------
+    def update(self):
+        self.rect.centery = self.rect.centery + 1
 
 
 #DEFINING VARIABLES=============================================================
@@ -195,9 +232,12 @@ fprojectiles_group = pygame.sprite.Group()
 enemies = []
 enemies_group = pygame.sprite.Group()
 allies = []
+allies_group = pygame.sprite.Group()
 player = Player(230, 300, 20, 5, "assets/Ship.png", 3)
 player_group = pygame.sprite.Group()
 player_group.add(player)
+powerups = []
+powerups_group = pygame.sprite.Group()
 a = 0
 b = 200
 score = 0
@@ -215,6 +255,9 @@ while not done:
         """Game loop if still alive"""
 
 #DRAWING, UPDATING AND DELETING OBJECTS-----------------------------------------
+        for i in powerups:
+            screen.blit(i.draw(), (i.rect.x, i.rect.y))
+            i.update()
         for i in eprojectiles:
             screen.blit(i.draw(), (i.rect.x, i.rect.y))
             i.update()
@@ -247,18 +290,24 @@ while not done:
             a = 0
 
 #COLLISION DETECTION------------------------------------------------------------
-        ef_collide = pygame.sprite.groupcollide(enemies_group, fprojectiles_group, True, True)
+        ef_collide = pygame.sprite.groupcollide(enemies_group, fprojectiles_group, True, True, pygame.sprite.collide_mask)
         ef_collide_enemies = ef_collide.keys()
         ef_collide_fprojectiles = ef_collide.values()
         for i in ef_collide_enemies:
+            #i.die()
             enemies.remove(i)
             score = score + 1
         for i in ef_collide_fprojectiles:
             fprojectiles.remove(i[0])
-        pe_collide = pygame.sprite.groupcollide(player_group, eprojectiles_group, False, True)
+        pe_collide = pygame.sprite.groupcollide(player_group, eprojectiles_group, False, True, pygame.sprite.collide_mask)
         pe_collide_eprojectiles = pe_collide.values()
         for i in pe_collide_eprojectiles:
             player.hp = player.hp - 1
+            eprojectiles.remove(i[0])
+        pp_collide = pygame.sprite.groupcollide(player_group, powerups_group, False, True, pygame.sprite.collide_mask)
+        pp_collide_powerups = pp_collide.values()
+        for i in pp_collide_powerups:
+            player.hp = player.hp + 1
             eprojectiles.remove(i[0])
 
 #VARIABLES UPDATE---------------------------------------------------------------
@@ -277,7 +326,7 @@ while not done:
 #LOOP UPDATE--------------------------------------------------------------------
     pygame.display.flip()
     clock.tick(60)
-
+    print(powerups)
 
 #EXIT GAME LOOP=================================================================
 pygame.quit()
