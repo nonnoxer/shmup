@@ -10,6 +10,11 @@ pygame.mixer.music.play(-1)
 pygame.font.init()
 font = pygame.font.SysFont('Consolas', 16)
 bigfont = pygame.font.SysFont('Consolas', 32)
+missile_sound =  pygame.mixer.Sound('assets/missile sound.wav')
+laser_sound = pygame.mixer.Sound('assets/laser sound.wav')
+explosion = pygame.mixer.Sound('assets/explosion.wav')
+thunk = pygame.mixer.Sound('assets/thunk.wav')
+zwoop = pygame.mixer.Sound('assets/powerup.wav')
 import random
 
 
@@ -85,6 +90,7 @@ class Player(Target):
         if pygame.key.get_pressed()[pygame.K_w] and self.a >= 24:
             fprojectiles.append(Laser(self.rect.centerx, self.rect.centery, 5, -5, 0, "assets/Laser.png"))
             fprojectiles_group.add(fprojectiles[len(fprojectiles) - 1])
+            laser_sound.play()
             self.a = 0
 
 
@@ -109,14 +115,17 @@ class Enemy(Target):
             eprojectiles_group.add(eprojectiles[len(eprojectiles) - 1])
             eprojectiles.append(Laser(self.rect.centerx, self.rect.centery, 5, 2, -1, "assets/Laser.png"))
             eprojectiles_group.add(eprojectiles[len(eprojectiles) - 1])
+            laser_sound.play()
         elif self.a % 96 == 0:
             eprojectiles.append(Missile(self.rect.centerx, self.rect.centery, 5, 2, "assets/Missile.png"))
             eprojectiles_group.add(eprojectiles[len(eprojectiles) - 1])
+            missile_sound.play()
             if self.a % 64 == 0:
                 self.a = 0
         if self.a % 64 == 0:
             eprojectiles.append(Laser(self.rect.centerx, self.rect.centery, 5, 2, 0, "assets/Laser.png"))
             eprojectiles_group.add(eprojectiles[len(eprojectiles) - 1])
+            laser_sound.play()
 
 #DIE----------------------------------------------------------------------------
     def die(self):
@@ -152,6 +161,7 @@ class Ally(Target):
             fprojectiles.append(Laser(self.rect.centerx, self.rect.centery, 5, -2, -2, "assets/Laser.png"))
             fprojectiles_group.add(fprojectiles[len(fprojectiles) - 1])
             self.a = 0
+            laser_sound.play()
 
 
 #PROJECTILE AND SUBCLASSES######################################################
@@ -340,6 +350,7 @@ while not done:
             i.die()
             enemies.remove(i)
             score = score + 1
+            explosion.play()
         for i in ef_collide_fprojectiles:
             fprojectiles.remove(i[0])
         ea_collide = pygame.sprite.groupcollide(enemies_group, allies_group, True, True, pygame.sprite.collide_mask)
@@ -349,6 +360,7 @@ while not done:
             i.die()
             enemies.remove(i)
             score = score + 1
+            explosion.play()
         for i in ea_collide_allies:
             allies.remove(i[0])
         ae_collide = pygame.sprite.groupcollide(allies_group, eprojectiles_group, True, True, pygame.sprite.collide_mask)
@@ -356,24 +368,34 @@ while not done:
         ae_collide_eprojectiles = ae_collide.values()
         for i in ae_collide_allies:
             allies.remove(i)
+            explosion.play()
         for i in ae_collide_eprojectiles:
             eprojectiles.remove(i[0])
         pe_collide = pygame.sprite.groupcollide(player_group, eprojectiles_group, False, True, pygame.sprite.collide_mask)
         pe_collide_eprojectiles = pe_collide.values()
         for i in pe_collide_eprojectiles:
             player.hp = player.hp - 1
+            if player.hp == 0:
+                explosion.play()
+            else:
+                thunk.play()
             eprojectiles.remove(i[0])
         ep_collide = pygame.sprite.groupcollide(player_group, enemies_group, False, True, pygame.sprite.collide_mask)
         ep_collide_enemies = ep_collide.values()
         for i in ep_collide_enemies:
             i[0].die()
             player.hp = player.hp - 1
+            if player.hp == 0:
+                explosion.play()
+            else:
+                thunk.play()
             enemies.remove(i[0])
         pp_collide = pygame.sprite.groupcollide(player_group, powerups_group, False, True, pygame.sprite.collide_mask)
         pp_collide_powerups = pp_collide.values()
         for i in pp_collide_powerups:
             i[0].die()
             powerups.remove(i[0])
+            zwoop.play()
 
 #VARIABLES UPDATE---------------------------------------------------------------
         a = a + 1
