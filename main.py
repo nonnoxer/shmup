@@ -1,3 +1,5 @@
+#This code is unreadable
+
 #INITIALISE=====================================================================
 import pygame
 import pygame.font
@@ -23,6 +25,7 @@ screen_rect = screen.get_rect()
 pygame.display.set_caption("Shmup")
 done = False
 clock = pygame.time.Clock()
+background = pygame.image.load('assets/background.png')
 
 
 
@@ -80,7 +83,7 @@ class Player(Target):
             self.rect.x = self.rect.x - self.spd
             self.rect.clamp_ip(screen_rect)
         if pygame.key.get_pressed()[pygame.K_w] and self.a >= 24:
-            fprojectiles.append(Laser(self.rect.centerx, self.rect.centery, 5, -5, "assets/Laser.png"))
+            fprojectiles.append(Laser(self.rect.centerx, self.rect.centery, 5, -5, 0, "assets/Laser.png"))
             fprojectiles_group.add(fprojectiles[len(fprojectiles) - 1])
             self.a = 0
 
@@ -101,30 +104,54 @@ class Enemy(Target):
     def update(self):
         Target.update(self)
         self.rect.y = self.rect.y + self.spd
-        if self.a % 128 == 0:
+        if self.a % 193 == 0:
+            eprojectiles.append(Laser(self.rect.centerx, self.rect.centery, 5, 2, 1, "assets/Laser.png"))
+            eprojectiles_group.add(eprojectiles[len(eprojectiles) - 1])
+            eprojectiles.append(Laser(self.rect.centerx, self.rect.centery, 5, 2, -1, "assets/Laser.png"))
+            eprojectiles_group.add(eprojectiles[len(eprojectiles) - 1])
+        elif self.a % 96 == 0:
             eprojectiles.append(Missile(self.rect.centerx, self.rect.centery, 5, 2, "assets/Missile.png"))
             eprojectiles_group.add(eprojectiles[len(eprojectiles) - 1])
-            if self.a % 48 == 0:
+            if self.a % 64 == 0:
                 self.a = 0
-        if self.a % 48 == 0:
-            eprojectiles.append(Laser(self.rect.centerx, self.rect.centery, 5, 4, "assets/Laser.png"))
+        if self.a % 64 == 0:
+            eprojectiles.append(Laser(self.rect.centerx, self.rect.centery, 5, 2, 0, "assets/Laser.png"))
             eprojectiles_group.add(eprojectiles[len(eprojectiles) - 1])
 
 #DIE----------------------------------------------------------------------------
-    #def die(self):
-    #    self.probability = random.randint(0, 99)
-    #    if self.probability >= 0:
-    #        powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 'assets/Bubble Heart.png'))
-    #        powerups_group.add(powerups[len(powerups) - 1])
+    def die(self):
+        self.probability = random.randint(0, 99)
+        if self.probability >= 90:
+            powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 1, 'assets/Bubble Ally.png', 'ally'))
+            powerups_group.add(powerups[len(powerups) - 1])
+        elif self.probability >= 75:
+            powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 1, 'assets/Bubble Heart.png', 'hp'))
+            powerups_group.add(powerups[len(powerups) - 1])
 
 
 #ALLY SUBCLASS==================================================================
 class Ally(Target):
+    """Computer controlled allies to help the player shoot enemies"""
 
 #PARENT CLASS INIT--------------------------------------------------------------
-    def __init__(self):
-        pass
+    def __init__(self, x, y, size, spd, img):
+        Target.__init__(self, x, y, size, spd, img)
+        self.a = 23
 
+#PARENT CLASS DRAW--------------------------------------------------------------
+    def draw(self):
+        return Target.draw(self)
+
+#UPDATE-------------------------------------------------------------------------
+    def update(self):
+        Target.update(self)
+        self.rect.centery = self.rect.centery + self.spd
+        if self.a % 24 == 0:
+            fprojectiles.append(Laser(self.rect.centerx, self.rect.centery, 5, -2, 2, "assets/Laser.png"))
+            fprojectiles_group.add(fprojectiles[len(fprojectiles) - 1])
+            fprojectiles.append(Laser(self.rect.centerx, self.rect.centery, 5, -2, -2, "assets/Laser.png"))
+            fprojectiles_group.add(fprojectiles[len(fprojectiles) - 1])
+            self.a = 0
 
 
 #PROJECTILE AND SUBCLASSES######################################################
@@ -162,8 +189,9 @@ class Laser(Projectile):
     """Subclass of projectile that travels vertically"""
 
 #PARENT CLASS INIT--------------------------------------------------------------
-    def __init__(self, x, y, size, spd, img):
+    def __init__(self, x, y, size, spd, dy, img):
         Projectile.__init__(self, x, y, size, spd, img)
+        self.dy = dy
 
 #PARENT CLASS DRAW--------------------------------------------------------------
     def draw(self):
@@ -172,6 +200,7 @@ class Laser(Projectile):
 #UPDATE-------------------------------------------------------------------------
     def update(self):
         Projectile.update(self)
+        self.rect.centerx = self.rect.centerx + self.dy
 
 
 #MISSILE SUBCLASS===============================================================
@@ -204,13 +233,15 @@ class Powerup(pygame.sprite.Sprite):
     """Parent class for all powerups"""
 
 #POWERUP INIT-------------------------------------------------------------------
-    def __init__(self, x, y, size, img):
+    def __init__(self, x, y, size, spd, img, type):
         pygame.sprite.Sprite.__init__(self)
         self.size = size
         self.img = pygame.image.load(img)
         self.rect = self.img.get_rect()
         self.rect.centerx = x
         self.rect.centery = y
+        self.mask = pygame.mask.from_surface(self.img)
+        self.type = type
 
 #POWERUP DRAW-------------------------------------------------------------------
     def draw(self):
@@ -222,6 +253,14 @@ class Powerup(pygame.sprite.Sprite):
 #POWERUP UPDATE-----------------------------------------------------------------
     def update(self):
         self.rect.centery = self.rect.centery + 1
+
+#POWERUP DIE--------------------------------------------------------------------
+    def die(self):
+        if self.type == 'hp':
+            player.hp = player.hp + 1
+        elif self.type == 'ally':
+            allies.append(Ally(self.rect.x, self.rect.y, 20, -1, 'assets/Ally.png'))
+            allies_group.add(allies[len(allies) - 1])
 
 
 #DEFINING VARIABLES=============================================================
@@ -250,6 +289,7 @@ while not done:
             done = True
 
     screen.fill(BLACK)
+    screen.blit(background, (0, 0))
 
     if player.hp > 0:
         """Game loop if still alive"""
@@ -275,6 +315,9 @@ while not done:
         for i in allies:
             screen.blit(i.draw(), (i.rect.x, i.rect.y))
             i.update()
+            if i.rect.y < 0:
+                allies.remove(i)
+                allies_group.remove(i)
         for i in enemies:
             screen.blit(i.draw(), (i.rect.x, i.rect.y))
             i.update()
@@ -294,21 +337,43 @@ while not done:
         ef_collide_enemies = ef_collide.keys()
         ef_collide_fprojectiles = ef_collide.values()
         for i in ef_collide_enemies:
-            #i.die()
+            i.die()
             enemies.remove(i)
             score = score + 1
         for i in ef_collide_fprojectiles:
             fprojectiles.remove(i[0])
+        ea_collide = pygame.sprite.groupcollide(enemies_group, allies_group, True, True, pygame.sprite.collide_mask)
+        ea_collide_enemies = ea_collide.keys()
+        ea_collide_allies = ea_collide.values()
+        for i in ea_collide_enemies:
+            i.die()
+            enemies.remove(i)
+            score = score + 1
+        for i in ea_collide_allies:
+            allies.remove(i[0])
+        ae_collide = pygame.sprite.groupcollide(allies_group, eprojectiles_group, True, True, pygame.sprite.collide_mask)
+        ae_collide_allies = ae_collide.keys()
+        ae_collide_eprojectiles = ae_collide.values()
+        for i in ae_collide_allies:
+            allies.remove(i)
+        for i in ae_collide_eprojectiles:
+            eprojectiles.remove(i[0])
         pe_collide = pygame.sprite.groupcollide(player_group, eprojectiles_group, False, True, pygame.sprite.collide_mask)
         pe_collide_eprojectiles = pe_collide.values()
         for i in pe_collide_eprojectiles:
             player.hp = player.hp - 1
             eprojectiles.remove(i[0])
+        ep_collide = pygame.sprite.groupcollide(player_group, enemies_group, False, True, pygame.sprite.collide_mask)
+        ep_collide_enemies = ep_collide.values()
+        for i in ep_collide_enemies:
+            i[0].die()
+            player.hp = player.hp - 1
+            enemies.remove(i[0])
         pp_collide = pygame.sprite.groupcollide(player_group, powerups_group, False, True, pygame.sprite.collide_mask)
         pp_collide_powerups = pp_collide.values()
         for i in pp_collide_powerups:
-            player.hp = player.hp + 1
-            eprojectiles.remove(i[0])
+            i[0].die()
+            powerups.remove(i[0])
 
 #VARIABLES UPDATE---------------------------------------------------------------
         a = a + 1
@@ -326,7 +391,6 @@ while not done:
 #LOOP UPDATE--------------------------------------------------------------------
     pygame.display.flip()
     clock.tick(60)
-    print(powerups)
 
 #EXIT GAME LOOP=================================================================
 pygame.quit()
