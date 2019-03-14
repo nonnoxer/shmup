@@ -80,7 +80,7 @@ class Player(Target):
 
 #UPDATE-------------------------------------------------------------------------
     def update(self):
-        global allies_count
+        global allies_count, shields_count
         Target.update(self)
         if pygame.key.get_pressed()[pygame.K_RIGHT]:
             self.rect.x = self.rect.x + self.spd
@@ -97,6 +97,10 @@ class Player(Target):
             allies.append(Ally(self.rect.x, self.rect.y, 20, -1, 'assets/Ally.png'))
             allies_group.add(allies[len(allies) - 1])
             allies_count = allies_count - 1
+        if pygame.key.get_pressed()[pygame.K_d] and shields_count > 0:
+            shields.append(Shield(self.rect.centerx, self.rect.centery, 40, 0, 'assets/Shield.png'))
+            shields_group.add(shields[len(shields) - 1])
+            shields_count = shields_count - 1
 
 
 #ENEMY SUBCLASS=================================================================
@@ -115,7 +119,7 @@ class Enemy(Target):
     def update(self):
         Target.update(self)
         self.rect.y = self.rect.y + self.spd
-        if self.a % 96 == 0:
+        if self.a % 128 == 0:
             eprojectiles.append(Missile(self.rect.centerx, self.rect.centery, 5, 2, "assets/Missile.png"))
             eprojectiles_group.add(eprojectiles[len(eprojectiles) - 1])
             missile_sound.play()
@@ -128,9 +132,12 @@ class Enemy(Target):
 
 #DIE----------------------------------------------------------------------------
     def die(self):
-        self.probability = random.randint(0, 99)
-        if self.probability >= 0:
+        self.probability = random.randint(0, 100)
+        if self.probability >= 95:
             powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 1, 'assets/Bubble Ally.png', 'ally'))
+            powerups_group.add(powerups[len(powerups) - 1])
+        elif self.probability >= 90:
+            powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 1, 'assets/Bubble Shield.png', 'shield'))
             powerups_group.add(powerups[len(powerups) - 1])
         elif self.probability >= 75:
             powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 1, 'assets/Bubble Heart.png', 'hp'))
@@ -161,6 +168,27 @@ class Ally(Target):
             fprojectiles_group.add(fprojectiles[len(fprojectiles) - 1])
             self.a = 0
             laser_sound.play()
+
+
+#SHIELD SUBCLASS==================================================================
+class Shield(Target):
+    """Shield that follows player in order to block enemy projectiles"""
+
+#PARENT CLASS INIT--------------------------------------------------------------
+    def __init__(self, x, y, size, spd, img):
+        Target.__init__(self, x, y, size, spd, img)
+        self.rect.centerx = x
+        self.rect.centery = y
+
+#PARENT CLASS DRAW--------------------------------------------------------------
+    def draw(self):
+        return Target.draw(self)
+
+#UPDATE-------------------------------------------------------------------------
+    def update(self):
+        Target.update(self)
+        self.rect.centerx = player.rect.centerx
+
 
 
 #PROJECTILE AND SUBCLASSES######################################################
@@ -265,11 +293,13 @@ class Powerup(pygame.sprite.Sprite):
 
 #POWERUP DIE--------------------------------------------------------------------
     def die(self):
-        global allies_count
+        global allies_count, shields_count
         if self.type == 'hp':
             player.hp = player.hp + 1
         elif self.type == 'ally':
             allies_count = allies_count + 1
+        elif self.type == 'shield':
+            shields_count = shields_count + 1
 
 
 #DEFINING VARIABLES=============================================================
@@ -286,6 +316,8 @@ player_group = pygame.sprite.Group()
 player_group.add(player)
 powerups = []
 powerups_group = pygame.sprite.Group()
+shields = []
+shields_group = pygame.sprite.Group()
 a = 0
 b = 200
 score = 0
@@ -321,8 +353,15 @@ while not done:
             if i.rect.y < 0:
                 fprojectiles.remove(i)
                 fprojectiles_group.remove(i)
+        for i in shields:
+            screen.blit(i.draw(), (i.rect.x, i.rect.y))
         screen.blit(player.draw(), (player.rect.x, player.rect.y))
         player.update()
+        for i in shields:
+            i.update()
+            if i.a >= 240:
+                shields.remove(i)
+                shields_group.remove(i)
         for i in allies:
             screen.blit(i.draw(), (i.rect.x, i.rect.y))
             i.update()
@@ -371,6 +410,17 @@ while not done:
             allies.remove(i)
             explosion.play()
         for i in ae_collide_eprojectiles:
+            eprojectiles.remove(i[0])
+        es_collide = pygame.sprite.groupcollide(enemies_group, shields_group, True, False, pygame.sprite.collide_mask)
+        es_collide_enemies = es_collide.keys()
+        for i in es_collide_enemies:
+            i.die()
+            enemies.remove(i)
+            score = score + 1
+            explosion.play()
+        se_collide = pygame.sprite.groupcollide(shields_group, eprojectiles_group, False, True, pygame.sprite.collide_mask)
+        se_collide_eprojectiles = se_collide.values()
+        for i in se_collide_eprojectiles:
             eprojectiles.remove(i[0])
         pe_collide = pygame.sprite.groupcollide(player_group, eprojectiles_group, False, True, pygame.sprite.collide_mask)
         pe_collide_eprojectiles = pe_collide.values()
