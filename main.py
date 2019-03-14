@@ -80,6 +80,7 @@ class Player(Target):
 
 #UPDATE-------------------------------------------------------------------------
     def update(self):
+        global allies_count
         Target.update(self)
         if pygame.key.get_pressed()[pygame.K_RIGHT]:
             self.rect.x = self.rect.x + self.spd
@@ -92,6 +93,10 @@ class Player(Target):
             fprojectiles_group.add(fprojectiles[len(fprojectiles) - 1])
             laser_sound.play()
             self.a = 0
+        if pygame.key.get_pressed()[pygame.K_s] and allies_count > 0:
+            allies.append(Ally(self.rect.x, self.rect.y, 20, -1, 'assets/Ally.png'))
+            allies_group.add(allies[len(allies) - 1])
+            allies_count = allies_count - 1
 
 
 #ENEMY SUBCLASS=================================================================
@@ -110,13 +115,7 @@ class Enemy(Target):
     def update(self):
         Target.update(self)
         self.rect.y = self.rect.y + self.spd
-        if self.a % 193 == 0:
-            eprojectiles.append(Laser(self.rect.centerx, self.rect.centery, 5, 2, 1, "assets/Laser.png"))
-            eprojectiles_group.add(eprojectiles[len(eprojectiles) - 1])
-            eprojectiles.append(Laser(self.rect.centerx, self.rect.centery, 5, 2, -1, "assets/Laser.png"))
-            eprojectiles_group.add(eprojectiles[len(eprojectiles) - 1])
-            laser_sound.play()
-        elif self.a % 96 == 0:
+        if self.a % 96 == 0:
             eprojectiles.append(Missile(self.rect.centerx, self.rect.centery, 5, 2, "assets/Missile.png"))
             eprojectiles_group.add(eprojectiles[len(eprojectiles) - 1])
             missile_sound.play()
@@ -130,7 +129,7 @@ class Enemy(Target):
 #DIE----------------------------------------------------------------------------
     def die(self):
         self.probability = random.randint(0, 99)
-        if self.probability >= 90:
+        if self.probability >= 0:
             powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 1, 'assets/Bubble Ally.png', 'ally'))
             powerups_group.add(powerups[len(powerups) - 1])
         elif self.probability >= 75:
@@ -266,11 +265,11 @@ class Powerup(pygame.sprite.Sprite):
 
 #POWERUP DIE--------------------------------------------------------------------
     def die(self):
+        global allies_count
         if self.type == 'hp':
             player.hp = player.hp + 1
         elif self.type == 'ally':
-            allies.append(Ally(self.rect.x, self.rect.y, 20, -1, 'assets/Ally.png'))
-            allies_group.add(allies[len(allies) - 1])
+            allies_count = allies_count + 1
 
 
 #DEFINING VARIABLES=============================================================
@@ -282,7 +281,7 @@ enemies = []
 enemies_group = pygame.sprite.Group()
 allies = []
 allies_group = pygame.sprite.Group()
-player = Player(230, 300, 20, 5, "assets/Ship.png", 3)
+player = Player(230, 300, 20, 4, "assets/Ship.png", 3)
 player_group = pygame.sprite.Group()
 player_group.add(player)
 powerups = []
@@ -290,6 +289,8 @@ powerups_group = pygame.sprite.Group()
 a = 0
 b = 200
 score = 0
+allies_count = 0
+shields_count = 0
 
 
 #MAIN LOOP======================================================================
@@ -403,6 +404,8 @@ while not done:
             b = b - 0.01
         screen.blit(font.render('Lives: ' + str(player.hp), False, WHITE), (0, 0))
         screen.blit(font.render('Score: ' + str(score), False, WHITE), (0, 16))
+        screen.blit(font.render('Allies: ' + str(allies_count), False, WHITE), (240, 0))
+        screen.blit(font.render('Shields: ' + str(shields_count), False, WHITE), (240, 16))
 
 #GAME OVER----------------------------------------------------------------------
     else:
