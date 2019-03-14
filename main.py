@@ -73,6 +73,7 @@ class Player(Target):
     def __init__(self, x, y, size, spd, img, hp):
         Target.__init__(self, x, y, size, spd, img)
         self.hp = hp
+        self.b = 0
 
 #PARENT CLASS DRAW--------------------------------------------------------------
     def draw(self):
@@ -93,6 +94,11 @@ class Player(Target):
             fprojectiles_group.add(fprojectiles[len(fprojectiles) - 1])
             laser_sound.play()
             self.a = 0
+        if pygame.key.get_pressed()[pygame.K_a] and self.b >= 240:
+            fprojectiles.append(Missile(self.rect.centerx, self.rect.centery, 5, -1, 4, 'assets/Missile.png', enemies[0]))
+            fprojectiles_group.add(fprojectiles[len(fprojectiles) - 1])
+            missile_sound.play()
+            self.b = 0
         if pygame.key.get_pressed()[pygame.K_s] and allies_count > 0:
             allies.append(Ally(self.rect.x, self.rect.y, 20, -1, 'assets/Ally.png'))
             allies_group.add(allies[len(allies) - 1])
@@ -101,6 +107,7 @@ class Player(Target):
             shields.append(Shield(self.rect.centerx, self.rect.centery, 40, 0, 'assets/Shield.png'))
             shields_group.add(shields[len(shields) - 1])
             shields_count = shields_count - 1
+        self.b = self.b + 1
 
 
 #ENEMY SUBCLASS=================================================================
@@ -120,7 +127,7 @@ class Enemy(Target):
         Target.update(self)
         self.rect.y = self.rect.y + self.spd
         if self.a % 128 == 0:
-            eprojectiles.append(Missile(self.rect.centerx, self.rect.centery, 5, 2, "assets/Missile.png"))
+            eprojectiles.append(Missile(self.rect.centerx, self.rect.centery, 5, 2, 2, "assets/Missile.png", player))
             eprojectiles_group.add(eprojectiles[len(eprojectiles) - 1])
             missile_sound.play()
             if self.a % 64 == 0:
@@ -245,8 +252,10 @@ class Missile(Projectile):
     """Subclass of projectile that seeks the player object"""
 
 #PARENT CLASS INIT--------------------------------------------------------------
-    def __init__(self, x, y, size, spd, img):
+    def __init__(self, x, y, size, spd, dy, img, target):
         Projectile.__init__(self, x, y, size, spd, img)
+        self.dy = dy
+        self.target = target
 
 #PARENT CLASS DRAW--------------------------------------------------------------
     def draw(self):
@@ -255,10 +264,12 @@ class Missile(Projectile):
 #UPDATE-------------------------------------------------------------------------
     def update(self):
         Projectile.update(self)
-        if self.rect.centerx > player.rect.centerx:
-            self.rect.centerx = self.rect.centerx - self.spd
-        elif self.rect.centerx < player.rect.centerx:
-            self.rect.centerx = self.rect.centerx + self.spd
+        if self.target != player and len(enemies) > 0:
+            self.target = enemies[0]
+        if self.rect.centerx - self.dy > self.target.rect.centerx:
+            self.rect.centerx = self.rect.centerx - self.dy
+        elif self.rect.centerx + self.dy < self.target.rect.centerx:
+            self.rect.centerx = self.rect.centerx + self.dy
 
 
 
