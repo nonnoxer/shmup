@@ -5,7 +5,7 @@ import pygame
 import pygame.font
 pygame.init()
 pygame.mixer.init()
-music = pygame.mixer.music.load("assets/space magic.ogg")
+music = pygame.mixer.music.load("assets/space magic.wav")
 pygame.mixer.music.play(-1)
 pygame.font.init()
 font = pygame.font.SysFont('Consolas', 16)
@@ -458,6 +458,7 @@ while not done:
             else:
                 thunk.play()
             enemies.remove(i[0])
+            explosion.play()
         pp_collide = pygame.sprite.groupcollide(player_group, powerups_group, False, True, pygame.sprite.collide_mask)
         pp_collide_powerups = pp_collide.values()
         for i in pp_collide_powerups:
@@ -477,8 +478,9 @@ while not done:
 #GAME OVER----------------------------------------------------------------------
     else:
         screen.blit(bigfont.render('Game Over', False, WHITE), (176, 148))
+        screen.blit(font.render('Final score: ' + str(score), False, WHITE), (176, 180))
         if score <= 0:
-            screen.blit(font.render('hAhA yOu SuCk', False, WHITE), (176, 180))
+            screen.blit(font.render('hAhA yOu SuCk', False, WHITE), (176, 196))
 
 #LOOP UPDATE--------------------------------------------------------------------
     pygame.display.flip()
