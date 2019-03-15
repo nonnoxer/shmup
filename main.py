@@ -15,6 +15,7 @@ laser_sound = pygame.mixer.Sound('assets/laser sound.wav')
 explosion = pygame.mixer.Sound('assets/explosion.wav')
 thunk = pygame.mixer.Sound('assets/thunk.wav')
 zwoop = pygame.mixer.Sound('assets/powerup.wav')
+fizzle = pygame.mixer.Sound('assets/fizzle.wav')
 import random
 
 
@@ -147,7 +148,7 @@ class Enemy(Target):
         elif self.probability >= 95:
             powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 1, 'assets/Bubble Ally.png', 'ally'))
             powerups_group.add(powerups[len(powerups) - 1])
-        elif self.probability >= 90:
+        elif self.probability >= 0:
             powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 1, 'assets/Bubble Shield.png', 'shield'))
             powerups_group.add(powerups[len(powerups) - 1])
         elif self.probability >= 75:
@@ -439,6 +440,7 @@ while not done:
         se_collide_eprojectiles = se_collide.values()
         for i in se_collide_eprojectiles:
             eprojectiles.remove(i[0])
+            fizzle.play()
         pe_collide = pygame.sprite.groupcollide(player_group, eprojectiles_group, False, True, pygame.sprite.collide_mask)
         pe_collide_eprojectiles = pe_collide.values()
         for i in pe_collide_eprojectiles:
