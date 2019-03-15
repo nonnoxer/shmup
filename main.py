@@ -95,10 +95,11 @@ class Player(Target):
             laser_sound.play()
             self.a = 0
         if pygame.key.get_pressed()[pygame.K_a] and self.b >= 240:
-            fprojectiles.append(Missile(self.rect.centerx, self.rect.centery, 5, -1, 4, 'assets/Missile.png', enemies[0]))
-            fprojectiles_group.add(fprojectiles[len(fprojectiles) - 1])
-            missile_sound.play()
-            self.b = 0
+            if len(enemies) > 0:
+                fprojectiles.append(Missile(self.rect.centerx, self.rect.centery, 5, -1, 4, 'assets/Missile.png', enemies[0]))
+                fprojectiles_group.add(fprojectiles[len(fprojectiles) - 1])
+                missile_sound.play()
+                self.b = 0
         if pygame.key.get_pressed()[pygame.K_s] and allies_count > 0:
             allies.append(Ally(self.rect.x, self.rect.y, 20, -1, 'assets/Ally.png'))
             allies_group.add(allies[len(allies) - 1])
@@ -140,7 +141,10 @@ class Enemy(Target):
 #DIE----------------------------------------------------------------------------
     def die(self):
         self.probability = random.randint(0, 100)
-        if self.probability >= 95:
+        if self.probability >= 100:
+            powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 1, 'assets/Bubble score.png', 'score'))
+            powerups_group.add(powerups[len(powerups) - 1])
+        elif self.probability >= 95:
             powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 1, 'assets/Bubble Ally.png', 'ally'))
             powerups_group.add(powerups[len(powerups) - 1])
         elif self.probability >= 90:
@@ -304,8 +308,10 @@ class Powerup(pygame.sprite.Sprite):
 
 #POWERUP DIE--------------------------------------------------------------------
     def die(self):
-        global allies_count, shields_count
-        if self.type == 'hp':
+        global allies_count, shields_count, score
+        if self.type == 'score':
+            score = score + 10
+        elif self.type == 'hp':
             player.hp = player.hp + 1
         elif self.type == 'ally':
             allies_count = allies_count + 1
