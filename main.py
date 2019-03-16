@@ -74,7 +74,10 @@ class Player(Target):
     def __init__(self, x, y, size, spd, img, hp):
         Target.__init__(self, x, y, size, spd, img)
         self.hp = hp
-        self.b = 0
+        self.missile_cooldown = 0
+        self.ally_cooldown = 0
+        self.shield_cooldown = 0
+        self.nuke_cooldown = 0
 
 #PARENT CLASS DRAW--------------------------------------------------------------
     def draw(self):
@@ -82,7 +85,7 @@ class Player(Target):
 
 #UPDATE-------------------------------------------------------------------------
     def update(self):
-        global allies_count, shields_count
+        global allies_count, shields_count, nukes_count, missiles_count
         Target.update(self)
         if pygame.key.get_pressed()[pygame.K_RIGHT]:
             self.rect.x = self.rect.x + self.spd
@@ -95,21 +98,35 @@ class Player(Target):
             fprojectiles_group.add(fprojectiles[len(fprojectiles) - 1])
             laser_sound.play()
             self.a = 0
-        if pygame.key.get_pressed()[pygame.K_a] and self.b >= 240:
+        if pygame.key.get_pressed()[pygame.K_a] and self.missile_cooldown >= 240 and missiles_count > 0:
             if len(enemies) > 0:
                 fprojectiles.append(Missile(self.rect.centerx, self.rect.centery, 5, -1, 4, 'assets/Missile.png', enemies[0]))
                 fprojectiles_group.add(fprojectiles[len(fprojectiles) - 1])
                 missile_sound.play()
-                self.b = 0
-        if pygame.key.get_pressed()[pygame.K_s] and allies_count > 0:
+                self.missile_cooldown = 0
+                missiles_count = missiles_count - 1
+        if pygame.key.get_pressed()[pygame.K_s] and self.ally_cooldown >= 240 and allies_count > 0:
             allies.append(Ally(self.rect.x, self.rect.y, 20, -1, 'assets/Ally.png'))
             allies_group.add(allies[len(allies) - 1])
             allies_count = allies_count - 1
-        if pygame.key.get_pressed()[pygame.K_d] and shields_count > 0:
+            self.ally_cooldown = 0
+        if pygame.key.get_pressed()[pygame.K_d] and self.shield_cooldown >= 240 and shields_count > 0:
             shields.append(Shield(self.rect.centerx, self.rect.centery, 40, 0, 'assets/Shield.png'))
             shields_group.add(shields[len(shields) - 1])
             shields_count = shields_count - 1
-        self.b = self.b + 1
+            self.shield_cooldown = 0
+        if pygame.key.get_pressed()[pygame.K_e] and self.nuke_cooldown >= 1440 and nukes_count > 0:
+            for i in range(120):
+                for j in range(160):
+                    fprojectiles.append(Laser(j * 3 + 1, 360 + i * 3, 5, -5, 0, "assets/Laser.png"))
+                    fprojectiles_group.add(fprojectiles[len(fprojectiles) - 1])
+                    laser_sound.play()
+            nukes_count = nukes_count - 1
+            self.nuke_cooldown = 0
+        self.missile_cooldown = self.missile_cooldown + 1
+        self.ally_cooldown = self.ally_cooldown + 1
+        self.shield_cooldown = self.shield_cooldown + 1
+        self.nuke_cooldown = self.nuke_cooldown + 1
 
 
 #ENEMY SUBCLASS=================================================================
@@ -143,7 +160,7 @@ class Enemy(Target):
     def die(self):
         self.probability = random.randint(0, 100)
         if self.probability >= 100:
-            powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 1, 'assets/Bubble score.png', 'score'))
+            powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 1, 'assets/Bubble Nuke.png', 'nuke'))
             powerups_group.add(powerups[len(powerups) - 1])
         elif self.probability >= 95:
             powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 1, 'assets/Bubble Ally.png', 'ally'))
@@ -153,6 +170,9 @@ class Enemy(Target):
             powerups_group.add(powerups[len(powerups) - 1])
         elif self.probability >= 75:
             powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 1, 'assets/Bubble Heart.png', 'hp'))
+            powerups_group.add(powerups[len(powerups) - 1])
+        elif self.probability >= 50:
+            powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 1, 'assets/Bubble Missile.png', 'missile'))
             powerups_group.add(powerups[len(powerups) - 1])
 
 
@@ -309,15 +329,17 @@ class Powerup(pygame.sprite.Sprite):
 
 #POWERUP DIE--------------------------------------------------------------------
     def die(self):
-        global allies_count, shields_count, score
-        if self.type == 'score':
-            score = score + 10
+        global allies_count, shields_count, score, nukes_count, missiles_count
+        if self.type == 'nuke':
+            nukes_count = nukes_count + 1
         elif self.type == 'hp':
             player.hp = player.hp + 1
         elif self.type == 'ally':
             allies_count = allies_count + 1
         elif self.type == 'shield':
             shields_count = shields_count + 1
+        elif self.type == 'missile':
+            missiles_count = missiles_count + 1
 
 
 #DEFINING VARIABLES=============================================================
@@ -341,6 +363,8 @@ b = 200
 score = 0
 allies_count = 0
 shields_count = 0
+nukes_count = 0
+missiles_count = 0
 
 
 #MAIN LOOP======================================================================
@@ -474,8 +498,10 @@ while not done:
             b = b - 0.01
         screen.blit(font.render('Lives: ' + str(player.hp), False, WHITE), (0, 0))
         screen.blit(font.render('Score: ' + str(score), False, WHITE), (0, 16))
-        screen.blit(font.render('Allies: ' + str(allies_count), False, WHITE), (240, 0))
-        screen.blit(font.render('Shields: ' + str(shields_count), False, WHITE), (240, 16))
+        screen.blit(font.render('Allies: ' + str(allies_count), False, WHITE), (160, 0))
+        screen.blit(font.render('Shields: ' + str(shields_count), False, WHITE), (160, 16))
+        screen.blit(font.render('Missiles: ' + str(missiles_count), False, WHITE), (320, 0))
+        screen.blit(font.render('Nukes: ' + str(nukes_count), False, WHITE), (320, 16))
 
 #GAME OVER----------------------------------------------------------------------
     else:
