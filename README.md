@@ -4,3 +4,4 @@
 * a: shoot missile
 * s: spawn ally
 * d: spawn shield
+* e: use nuke
