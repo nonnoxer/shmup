@@ -148,7 +148,7 @@ class Enemy(Target):
         elif self.probability >= 95:
             powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 1, 'assets/Bubble Ally.png', 'ally'))
             powerups_group.add(powerups[len(powerups) - 1])
-        elif self.probability >= 0:
+        elif self.probability >= 90:
             powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 1, 'assets/Bubble Shield.png', 'shield'))
             powerups_group.add(powerups[len(powerups) - 1])
         elif self.probability >= 75:
