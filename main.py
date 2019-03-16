@@ -158,8 +158,8 @@ class Enemy(Target):
 
 #DIE----------------------------------------------------------------------------
     def die(self):
-        self.probability = random.randint(0, 100)
-        if self.probability >= 100:
+        self.probability = random.randint(0, 99)
+        if self.probability >= 99:
             powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 1, 'assets/Bubble Nuke.png', 'nuke'))
             powerups_group.add(powerups[len(powerups) - 1])
         elif self.probability >= 95:
