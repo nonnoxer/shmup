@@ -1,5 +1,6 @@
 ## Controls:
-* Leftarrow & rightarrow: move ship
+* LEFTARROW: move left
+* RIGHTARROW: move right
 * w: shoot
 * a: shoot missile
 * s: spawn ally
