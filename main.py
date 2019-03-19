@@ -158,22 +158,7 @@ class Enemy(Target):
 
 #DIE----------------------------------------------------------------------------
     def die(self):
-        self.probability = random.randint(0, 99)
-        if self.probability >= 99:
-            powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 1, 'assets/Bubble Nuke.png', 'nuke'))
-            powerups_group.add(powerups[len(powerups) - 1])
-        elif self.probability >= 95:
-            powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 1, 'assets/Bubble Ally.png', 'ally'))
-            powerups_group.add(powerups[len(powerups) - 1])
-        elif self.probability >= 90:
-            powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 1, 'assets/Bubble Shield.png', 'shield'))
-            powerups_group.add(powerups[len(powerups) - 1])
-        elif self.probability >= 75:
-            powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 1, 'assets/Bubble Heart.png', 'hp'))
-            powerups_group.add(powerups[len(powerups) - 1])
-        elif self.probability >= 50:
-            powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 1, 'assets/Bubble Missile.png', 'missile'))
-            powerups_group.add(powerups[len(powerups) - 1])
+        explosions.append(Explosion(self.rect.centerx, self.rect.centery, 30, 'assets/Explosion/Explosion', True))
 
 
 #ALLY SUBCLASS==================================================================
@@ -298,12 +283,11 @@ class Missile(Projectile):
 
 
 
-#POWERUP AND SUBCLASSES#########################################################
+#MISC CLASSES#########################################################
 
 
-#POWERUP PARENT CLASS===========================================================
+#POWERUP CLASS==================================================================
 class Powerup(pygame.sprite.Sprite):
-    """Parent class for all powerups"""
 
 #POWERUP INIT-------------------------------------------------------------------
     def __init__(self, x, y, size, spd, img, type):
@@ -342,6 +326,45 @@ class Powerup(pygame.sprite.Sprite):
             missiles_count = missiles_count + 1
 
 
+#EXPLOSION CLASS================================================================
+class Explosion(object):
+    def __init__(self, x, y, size, path, die):
+        self.size = size
+        self.a = 0
+        self.path = path
+        self.img = pygame.image.load(self.path + str(self.a // 4) + '.png')
+        self.rect = self.img.get_rect()
+        self.rect.centerx = x
+        self.rect.centery = y
+        self.die = die
+    def draw(self):
+        self.surface = pygame.Surface((self.size, self.size), pygame.SRCALPHA, 32)
+        self.surface = self.surface.convert_alpha()
+        self.surface.blit(self.img, (0, 0))
+        if self.a == 60 and self.die:
+            self.probability = random.randint(0, 99)
+            if self.probability >= 99:
+                powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 1, 'assets/Bubble Nuke.png', 'nuke'))
+                powerups_group.add(powerups[len(powerups) - 1])
+            elif self.probability >= 96:
+                powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 1, 'assets/Bubble Ally.png', 'ally'))
+                powerups_group.add(powerups[len(powerups) - 1])
+            elif self.probability >= 90:
+                powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 1, 'assets/Bubble Shield.png', 'shield'))
+                powerups_group.add(powerups[len(powerups) - 1])
+            elif self.probability >= 75:
+                powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 1, 'assets/Bubble Heart.png', 'hp'))
+                powerups_group.add(powerups[len(powerups) - 1])
+            elif self.probability >= 50:
+                powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 1, 'assets/Bubble Missile.png', 'missile'))
+                powerups_group.add(powerups[len(powerups) - 1])
+        return self.surface
+    def update(self):
+        self.img = pygame.image.load(self.path + str(self.a // 4) + '.png')
+        self.a = self.a + 1
+
+
+
 #DEFINING VARIABLES=============================================================
 eprojectiles = []
 eprojectiles_group = pygame.sprite.Group()
@@ -358,6 +381,7 @@ powerups = []
 powerups_group = pygame.sprite.Group()
 shields = []
 shields_group = pygame.sprite.Group()
+explosions = []
 a = 0
 b = 200
 score = 0
@@ -422,6 +446,12 @@ while not done:
                 enemies.remove(i)
                 enemies_group.remove(i)
                 score = score - 10
+        for i in explosions:
+            screen.blit(i.draw(), (i.rect.x, i.rect.y))
+            if i.a <= 59:
+                i.update()
+            else:
+                explosions.remove(i)
 
 #SPAWNING ENEMIES---------------------------------------------------------------
         if a % int(b) == 0:
@@ -450,12 +480,15 @@ while not done:
             explosion.play()
         for i in ea_collide_allies:
             allies.remove(i[0])
+            explosion.play()
+            explosions.append(Explosion(i[0].rect.centerx, i[0].rect.centery, 30, 'assets/Explosion/Explosion', False))
         ae_collide = pygame.sprite.groupcollide(allies_group, eprojectiles_group, True, True, pygame.sprite.collide_mask)
         ae_collide_allies = ae_collide.keys()
         ae_collide_eprojectiles = ae_collide.values()
         for i in ae_collide_allies:
             allies.remove(i)
             explosion.play()
+            explosions.append(Explosion(i.rect.centerx, i.rect.centery, 30, 'assets/Explosion/Explosion', False))
         for i in ae_collide_eprojectiles:
             eprojectiles.remove(i[0])
         es_collide = pygame.sprite.groupcollide(enemies_group, shields_group, True, False, pygame.sprite.collide_mask)
@@ -533,6 +566,7 @@ while not done:
             powerups_group = pygame.sprite.Group()
             shields = []
             shields_group = pygame.sprite.Group()
+            explosions = []
             a = 0
             b = 200
             score = 0
