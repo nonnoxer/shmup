@@ -365,6 +365,7 @@ allies_count = 0
 shields_count = 0
 nukes_count = 0
 missiles_count = 0
+state = 0
 
 
 #MAIN LOOP======================================================================
@@ -375,8 +376,12 @@ while not done:
 
     screen.fill(BLACK)
     screen.blit(background, (0, 0))
-
-    if player.hp > 0:
+    if state == 0:
+        screen.blit(bigfont.render("SHoot 'eM UP", False, WHITE), (176, 148))
+        screen.blit(font.render('Press SPACE to start', False, WHITE), (176, 180))
+        if pygame.key.get_pressed()[pygame.K_SPACE]:
+            state = 1
+    elif state == 1:
         """Game loop if still alive"""
 
 #DRAWING, UPDATING AND DELETING OBJECTS-----------------------------------------
@@ -471,6 +476,7 @@ while not done:
             player.hp = player.hp - 1
             if player.hp == 0:
                 explosion.play()
+                state = 2
             else:
                 thunk.play()
             eprojectiles.remove(i[0])
@@ -481,6 +487,7 @@ while not done:
             player.hp = player.hp - 1
             if player.hp == 0:
                 explosion.play()
+                state = 2
             else:
                 thunk.play()
             enemies.remove(i[0])
@@ -504,11 +511,36 @@ while not done:
         screen.blit(font.render('Nukes: ' + str(nukes_count), False, WHITE), (320, 16))
 
 #GAME OVER----------------------------------------------------------------------
-    else:
+    elif state == 2:
         screen.blit(bigfont.render('Game Over', False, WHITE), (176, 148))
         screen.blit(font.render('Final score: ' + str(score), False, WHITE), (176, 180))
+        screen.blit(font.render('Press SPACE to restart', False, WHITE), (176, 196))
         if score <= 0:
-            screen.blit(font.render('hAhA yOu SuCk', False, WHITE), (176, 196))
+            screen.blit(font.render('hAhA yOu SuCk', False, WHITE), (176, 212))
+        if pygame.key.get_pressed()[pygame.K_SPACE]:
+            eprojectiles = []
+            eprojectiles_group = pygame.sprite.Group()
+            fprojectiles = []
+            fprojectiles_group = pygame.sprite.Group()
+            enemies = []
+            enemies_group = pygame.sprite.Group()
+            allies = []
+            allies_group = pygame.sprite.Group()
+            player = Player(230, 300, 20, 4, "assets/Ship.png", 3)
+            player_group = pygame.sprite.Group()
+            player_group.add(player)
+            powerups = []
+            powerups_group = pygame.sprite.Group()
+            shields = []
+            shields_group = pygame.sprite.Group()
+            a = 0
+            b = 200
+            score = 0
+            allies_count = 0
+            shields_count = 0
+            nukes_count = 0
+            missiles_count = 0
+            state = 1
 
 #LOOP UPDATE--------------------------------------------------------------------
     pygame.display.flip()
