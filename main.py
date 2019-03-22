@@ -74,10 +74,10 @@ class Player(Target):
     def __init__(self, x, y, size, spd, img, hp):
         Target.__init__(self, x, y, size, spd, img)
         self.hp = hp
-        self.missile_cooldown = 0
-        self.ally_cooldown = 0
-        self.shield_cooldown = 0
-        self.nuke_cooldown = 0
+        self.missile_cooldown = 24
+        self.ally_cooldown = 240
+        self.shield_cooldown = 240
+        self.nuke_cooldown = 240
 
 #PARENT CLASS DRAW--------------------------------------------------------------
     def draw(self):
@@ -98,7 +98,7 @@ class Player(Target):
             fprojectiles_group.add(fprojectiles[len(fprojectiles) - 1])
             laser_sound.play()
             self.a = 0
-        if pygame.key.get_pressed()[pygame.K_a] and self.missile_cooldown >= 240 and missiles_count > 0:
+        if pygame.key.get_pressed()[pygame.K_a] and self.missile_cooldown >= 24 and missiles_count > 0:
             if len(enemies) > 0:
                 fprojectiles.append(Missile(self.rect.centerx, self.rect.centery, 5, -1, 4, 'assets/Missile.png', enemies[0]))
                 fprojectiles_group.add(fprojectiles[len(fprojectiles) - 1])
@@ -115,7 +115,7 @@ class Player(Target):
             shields_group.add(shields[len(shields) - 1])
             shields_count = shields_count - 1
             self.shield_cooldown = 0
-        if pygame.key.get_pressed()[pygame.K_e] and self.nuke_cooldown >= 1440 and nukes_count > 0:
+        if pygame.key.get_pressed()[pygame.K_e] and self.nuke_cooldown >= 240 and nukes_count > 0:
             for i in range(120):
                 for j in range(160):
                     fprojectiles.append(Laser(j * 3 + 1, 360 + i * 3, 5, -5, 0, "assets/Laser.png"))
