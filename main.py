@@ -342,7 +342,7 @@ class Explosion(object):
         self.surface = self.surface.convert_alpha()
         self.surface.blit(self.img, (0, 0))
         if self.a == 60 and self.die:
-            self.probability = random.randint(0, 99)
+            self.probability = random.randint(0, 99) * multiplier
             if self.probability >= 99:
                 powerups.append(Powerup(self.rect.centerx, self.rect.centery, 20, 1, 'assets/Bubble Nuke.png', 'nuke'))
                 powerups_group.add(powerups[len(powerups) - 1])
@@ -390,6 +390,7 @@ shields_count = 0
 nukes_count = 0
 missiles_count = 0
 state = 0
+multiplier = 1
 
 
 #MAIN LOOP======================================================================
@@ -458,6 +459,7 @@ while not done:
             enemies.append(Enemy(random.randint(0, 460), -20, 20, 1, "assets/Enemy.png"))
             enemies_group.add(enemies[len(enemies) - 1])
             a = 0
+            multiplier = multiplier + 0.01
 
 #COLLISION DETECTION------------------------------------------------------------
         ef_collide = pygame.sprite.groupcollide(enemies_group, fprojectiles_group, True, True, pygame.sprite.collide_mask)
