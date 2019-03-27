@@ -187,7 +187,7 @@ class Ally(Target):
             laser_sound.play()
 
 
-#SHIELD SUBCLASS==================================================================
+#SHIELD SUBCLASS================================================================
 class Shield(Target):
     """Shield that follows player in order to block enemy projectiles"""
 
